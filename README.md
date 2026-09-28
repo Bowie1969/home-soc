@@ -7,6 +7,7 @@ A small self-hosted SOC, in progress.
 - `sink.py` — delivers alerts via **ntfy** when `NTFY_TOPIC` is set, otherwise dry-run prints.
 - `runner.py` — periodic tripwire checks wired through scorer → policy → sink.
 - `cowrie.py` — tail Cowrie honeypot JSON logs and emit `honeypot_login`, `auth_fail_burst`, and `shell_detected` hits.
+- `honeypot-bait/` — isolated Cowrie container + bait SSH key for scammer engagement. See its README.
 
 Pure Python stdlib for the core; `runner.py` uses `ping` and `sink.py` uses `urllib` for ntfy.
 

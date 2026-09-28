@@ -1,2 +1,7 @@
 __pycache__/
 *.pyc
+honeypot-bait/cowrie-data/
+honeypot-bait/cowrie-logs/
+honeypot-bait/bait_key
+honeypot-bait/bait_key.pub
+
