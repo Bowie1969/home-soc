@@ -28,18 +28,32 @@ TRIPWIRES = {
 CONF_HIGH, SEV_HIGH = 60.0, 70.0
 CONF_MED,  SEV_MED  = 20.0, 25.0
 
+# Machine-readable rung levels and human labels.
+RUNG_LABELS = {
+    0: "LOW",
+    1: "MEDIUM",
+    2: "WATCH",
+    3: "HIGH",
+    4: "CRITICAL",
+}
+
+
+def rung_level(confidence, severity):
+    """Return the numeric rung level for a (confidence, severity) pair."""
+    if confidence >= CONF_HIGH and severity >= SEV_HIGH:
+        return 4
+    if confidence >= CONF_HIGH:
+        return 3
+    if severity >= SEV_HIGH:
+        return 2
+    if confidence >= CONF_MED or severity >= SEV_MED:
+        return 1
+    return 0
+
 
 def rung(confidence, severity):
-    """Permission granted for a (confidence, severity) pair — the 2x2."""
-    if confidence >= CONF_HIGH and severity >= SEV_HIGH:
-        return "CRITICAL  agent acts (reversible verbs only)"
-    if confidence >= CONF_HIGH:
-        return "HIGH      auto-contain (block / quarantine)"
-    if severity >= SEV_HIGH:
-        return "WATCH     notify + investigate (read-only)"
-    if confidence >= CONF_MED or severity >= SEV_MED:
-        return "MEDIUM    notify"
-    return "LOW       log only"
+    """Human-readable rung label for a (confidence, severity) pair."""
+    return RUNG_LABELS[rung_level(confidence, severity)]
 
 
 class Scorer:
@@ -68,9 +82,10 @@ class Scorer:
         now = time.time() if now is None else now
         e = self.entities.get(entity)
         if e is None:
-            return 0.0, 0.0, rung(0.0, 0.0)
+            return 0.0, 0.0, 0, RUNG_LABELS[0]
         self._decay(e, now)
-        return round(e["conf"], 1), round(e["sev"], 1), rung(e["conf"], e["sev"])
+        level = rung_level(e["conf"], e["sev"])
+        return round(e["conf"], 1), round(e["sev"], 1), level, RUNG_LABELS[level]
 
 
 if __name__ == "__main__":
@@ -78,7 +93,7 @@ if __name__ == "__main__":
     now = 1_000_000.0
 
     def show(label, entity="10.10.130.7"):
-        conf, sev, r = s.score(entity, now)
+        conf, sev, level, r = s.score(entity, now)
         print(f"{label:20s} conf={conf:5.1f}  sev={sev:5.1f}  -> {r}")
 
     print("one entity, fake tripwires only — watch it climb and slide back down:\n")
