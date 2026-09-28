@@ -9,6 +9,7 @@ import time
 from scorer import Scorer
 from policy import Policy
 from sink import alert
+from cowrie import CowrieTailer
 
 INTERVAL = int(os.environ.get("SOC_INTERVAL", "60"))
 
@@ -52,9 +53,12 @@ def check_reachability(scorer, targets):
             scorer.hit(name, "fw_drop_spike")
 
 
-def tick(scorer, policy, targets):
+def tick(scorer, policy, targets, tailer=None):
     """One pass: collect tripwires, score, check policy, alert on transitions."""
     check_reachability(scorer, targets)
+    if tailer is not None:
+        for tripwire, entity, ts in tailer.poll():
+            scorer.hit(entity, tripwire, ts)
     now = time.time()
     for entity in list(scorer.entities.keys()):
         conf, sev, level, label = scorer.score(entity, now)
@@ -73,19 +77,24 @@ def main():
     args = parser.parse_args()
 
     targets = _parse_targets(os.environ.get("SOC_TARGETS"))
+    cowrie_path = os.environ.get("COWRIE_LOG_PATH")
+    tailer = CowrieTailer(cowrie_path) if cowrie_path else None
+
     scorer = Scorer()
     policy = Policy()
 
     print(f"SOC runner started; interval={INTERVAL}s")
     print(f"Targets: {', '.join(f'{n} ({ip})' for n, ip in targets.items())}")
+    if tailer:
+        print(f"Cowrie log: {cowrie_path}")
 
     if args.once:
-        tick(scorer, policy, targets)
+        tick(scorer, policy, targets, tailer)
         return
 
     try:
         while True:
-            tick(scorer, policy, targets)
+            tick(scorer, policy, targets, tailer)
             time.sleep(INTERVAL)
     except KeyboardInterrupt:
         print("\nSOC runner stopped.")

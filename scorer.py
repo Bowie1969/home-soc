@@ -61,7 +61,8 @@ class Scorer:
         self.entities = {}  # name -> {"conf": float, "sev": float, "last": float}
 
     def _decay(self, e, now):
-        factor = math.exp(-(now - e["last"]) / HALF_LIFE)
+        delta = max(0.0, now - e["last"])
+        factor = math.exp(-delta / HALF_LIFE)
         e["conf"] *= factor
         e["sev"] *= factor
         e["last"] = now
