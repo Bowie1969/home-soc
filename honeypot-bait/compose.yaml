@@ -16,7 +16,7 @@ services:
       - COWRIE_SSH_ENABLED=yes
       - COWRIE_SSH_LISTEN_ENDPOITNS=tcp:2222:interface=0.0.0.0
       - COWRIE_SSH_AUTH_PUBLICKEY_ALLOW_ANY=true
-      - COWRIE_HOSTNAME=will-trading-pc
+      - COWRIE_HOSTNAME=soc-honeypot
       - COWRIE_LOG_PATH=/cowrie/cowrie-git/var/log/cowrie
     volumes:
       - ./cowrie-logs:/cowrie/cowrie-git/var/log/cowrie

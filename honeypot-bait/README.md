@@ -1,11 +1,11 @@
 # honeypot-bait
 
-Isolated Cowrie SSH honeypot for baiting the `xebaredge.com` scammer.
+Isolated Cowrie SSH honeypot for capturing and fingerprinting unauthorized access attempts against infrastructure you control.
 
 ## Quick start
 
 ```bash
-./gen-key.sh     # creates bait_key + installs public key into Cowrie
+./gen-key.sh     # creates a throwaway bait key + installs the public key into Cowrie
 ./start.sh       # starts the honeypot on localhost:2222
 ./watch.py       # live colour tail of events
 ./stop.sh        # stops the container
@@ -13,24 +13,26 @@ Isolated Cowrie SSH honeypot for baiting the `xebaredge.com` scammer.
 
 ## What you get
 
-- A throwaway SSH key pair: `bait_key` (private) and `bait_key.pub`.
-- Cowrie honeypot running in a rootless Podman container.
-- Cowrie accepts **any SSH public key or password** so the bait key just needs to exist, not be pre-registered.
+- A throwaway SSH key pair: `bait_key` (private) and `bait_key.pub` — both gitignored.
+- Cowrie running in a rootless Podman/Docker container on an isolated network.
+- Cowrie accepts any SSH public key or password, so the key only needs to exist.
 - JSON logs written to `cowrie-logs/cowrie.json`.
-- Live viewer with colour-coded events.
+- A live colour-coded event viewer.
 
-## Exposing it to the scammer
+## Deploying it
 
-**Do not expose this from your home network.** The honeypot runs on `localhost:2222` by design.
+The container binds to `localhost:2222` by design and sits on its own network — it cannot reach host services.
 
-Safer options:
+To capture real internet traffic:
 
-1. **Cloud VPS** — copy this `honeypot-bait/` folder to a cheap VPS, install Podman, and run `./start.sh`. Then open TCP/2222 in the cloud firewall.
-2. **Existing DO Cowrie host** — point the scammer at the Cowrie you already have running on DigitalOcean; this local setup is for testing/dev.
+1. **Cloud VPS** — copy this `honeypot-bait/` folder to a VPS, install Podman, run `./start.sh`, and open TCP/2222 in the cloud firewall only.
+2. **Existing honeypot host** — point `runner.py` at a Cowrie log you already run elsewhere; this local setup is for testing/dev.
+
+Do **not** forward this from your home network to the internet.
 
 ## Wiring into the SOC
 
-The main `runner.py` can read this Cowrie log directly:
+The main `runner.py` reads this Cowrie log directly:
 
 ```bash
 COWRIE_LOG_PATH=honeypot-bait/cowrie-logs/cowrie.json python3 runner.py --once
@@ -38,7 +40,7 @@ COWRIE_LOG_PATH=honeypot-bait/cowrie-logs/cowrie.json python3 runner.py --once
 
 ## Safety notes
 
-- The container is on its own Podman network, not your home LAN.
-- Cowrie accepts **any password** by default, so the scammer can log in even if the key doesn't work for them.
+- The container runs on its own Podman network, not your LAN.
+- Cowrie accepts any password by default, so unauthorised logins still land in a sandbox.
 - The bait key is throwaway: never reuse it for anything real.
-- Wipe `cowrie-data/` and `cowrie-logs/` after the bait is over.
+- Wipe `cowrie-data/` and `cowrie-logs/` after the engagement is over.
